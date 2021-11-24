@@ -188,12 +188,11 @@ if __name__ == '__main__':
 
     cluster_config = wazuh.core.cluster.utils.read_config()
     wazuh.core.cluster.cluster.check_cluster_config(config=cluster_config)
-
     try:
-        if args.filter_status and not args.list_agents:
-            logging.error("Wrong arguments.")
-            parser.print_help()
-            sys.exit(1)
+        if args.filter_status:
+            my_function, my_args = print_agents, (args.filter_status, args.filter_node,)
+        elif args.filter_node:
+            my_function, my_args = print_nodes, (args.filter_node,)
         elif args.list_agents:
             my_function, my_args = print_agents, (args.filter_status, args.filter_node,)
         elif args.list_nodes:

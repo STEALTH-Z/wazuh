@@ -410,7 +410,8 @@ void c_group(const char *group, char ** files, file_sum ***_f_sum,char * sharedc
             merror("Accessing file '%s'", merged);
         }
         else{
-            strncpy(f_sum[0]->sum, md5sum, 32);
+            strncpy(f_sum[0]->sum, md5sum, 33);
+            f_sum[0]->sum[32] = '\0';
             os_strdup(SHAREDCFG_FILENAME, f_sum[0]->name);
         }
 
@@ -428,7 +429,8 @@ void c_group(const char *group, char ** files, file_sum ***_f_sum,char * sharedc
             os_realloc(f_sum, (f_size + 2) * sizeof(file_sum *), f_sum);
             *_f_sum = f_sum;
             os_calloc(1, sizeof(file_sum), f_sum[f_size]);
-            strncpy(f_sum[f_size]->sum, md5sum, 32);
+            strncpy(f_sum[f_size]->sum, md5sum, 33);
+            f_sum[f_size]->sum[32] = '\0';
             os_strdup(DEFAULTAR_FILE, f_sum[f_size]->name);
             f_sum[f_size + 1] = NULL;
 
@@ -508,7 +510,8 @@ void c_group(const char *group, char ** files, file_sum ***_f_sum,char * sharedc
                 os_realloc(f_sum, (f_size + 2) * sizeof(file_sum *), f_sum);
                 *_f_sum = f_sum;
                 os_calloc(1, sizeof(file_sum), f_sum[f_size]);
-                strncpy(f_sum[f_size]->sum, md5sum, 32);
+                strncpy(f_sum[f_size]->sum, md5sum, 33);
+                f_sum[f_size]->sum[32] = '\0';
                 os_strdup(files[i], f_sum[f_size]->name);
 
                 if (!logr.nocmerged) {
@@ -533,7 +536,8 @@ void c_group(const char *group, char ** files, file_sum ***_f_sum,char * sharedc
             f_sum[0]->sum[0] = '\0';
         }
 
-        strncpy(f_sum[0]->sum, md5sum, 32);
+        strncpy(f_sum[0]->sum, md5sum, 33);
+        f_sum[0]->sum[32] = '\0';
         os_strdup(SHAREDCFG_FILENAME, f_sum[0]->name);
     }
 }
@@ -936,7 +940,8 @@ file_sum ** find_group(const char * file, const char * md5, char group[OS_SIZE_6
         if (f_sum) {
             for (j = 0; f_sum[j]; j++) {
                 if (!(strcmp(f_sum[j]->name, file) || strcmp(f_sum[j]->sum, md5))) {
-                    strncpy(group, groups[i]->group, OS_SIZE_65536);
+                    strncpy(group, groups[i]->group, OS_SIZE_65536 - 1);
+                    group[OS_SIZE_65536 - 1] = '\0';
                     return f_sum;
                 }
             }
@@ -970,7 +975,8 @@ int send_file_toagent(const char *agent_id, const char *group, const char *name,
         else{
             OS_SHA256_String(group,multi_group_hash);
             char _hash[9] = {0};
-            strncpy(_hash,multi_group_hash,8);
+            strncpy(_hash,multi_group_hash,9);
+            _hash[8] = '\0';
             OSHash_Add_ex(m_hash,group,strdup(_hash));
             snprintf(file, OS_SIZE_1024, "%s/%s/%s", sharedcfg_dir, _hash, name);
         }

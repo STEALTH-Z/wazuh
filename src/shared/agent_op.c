@@ -367,7 +367,8 @@ int set_agent_multigroup(char * group) {
     OS_SHA256_String(group,multi_group_hash);
     char _hash[9] = {0};
 
-    strncpy(_hash,multi_group_hash,8);
+    strncpy(_hash,multi_group_hash,9);
+    _hash[8] = '\0';
     snprintf(multigroup_path, PATH_MAX, "%s/%s" , MULTIGROUPS_DIR, _hash);
     DIR *dp;
     dp = opendir(multigroup_path);
@@ -575,7 +576,8 @@ void w_remove_multigroup(const char *group) {
             /* We only want the 8 first bytes of the hash */
             multi_group_hash[8] = '\0';
 
-            strncpy(_hash,multi_group_hash,8);
+            strncpy(_hash,multi_group_hash, 9);
+            _hash[8] = '\0';
 
             sprintf(path, "%s/%s", MULTIGROUPS_DIR, _hash);
 

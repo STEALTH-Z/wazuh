@@ -15,23 +15,23 @@ static const char *FIM_EVENT_TYPE_ARRAY[] = { "added", "deleted", "modified" };
 
 static const char *FIM_EVENT_MODE[] = { "scheduled", "realtime", "whodata" };
 
+const char *VALUE_TYPE[] = {
+    [REG_NONE] = "REG_NONE",
+    [REG_SZ] = "REG_SZ",
+    [REG_EXPAND_SZ] = "REG_EXPAND_SZ",
+    [REG_BINARY] = "REG_BINARY",
+    [REG_DWORD] = "REG_DWORD",
+    [REG_DWORD_BIG_ENDIAN] = "REG_DWORD_BIG_ENDIAN",
+    [REG_LINK] = "REG_LINK",
+    [REG_MULTI_SZ] = "REG_MULTI_SZ",
+    [REG_RESOURCE_LIST] = "REG_RESOURCE_LIST",
+    [REG_FULL_RESOURCE_DESCRIPTOR] = "REG_FULL_RESOURCE_DESCRIPTOR",
+    [REG_RESOURCE_REQUIREMENTS_LIST] = "REG_RESOURCE_REQUIREMENTS_LIST",
+    [REG_QWORD] = "REG_QWORD",
+};
+
 cJSON *fim_registry_value_attributes_json(const cJSON* dbsync_event, const fim_registry_value_data *data,
                                           const registry_t *configuration) {
-
-    static const char *VALUE_TYPE[] = {
-        [REG_NONE] = "REG_NONE",
-        [REG_SZ] = "REG_SZ",
-        [REG_EXPAND_SZ] = "REG_EXPAND_SZ",
-        [REG_BINARY] = "REG_BINARY",
-        [REG_DWORD] = "REG_DWORD",
-        [REG_DWORD_BIG_ENDIAN] = "REG_DWORD_BIG_ENDIAN",
-        [REG_LINK] = "REG_LINK",
-        [REG_MULTI_SZ] = "REG_MULTI_SZ",
-        [REG_RESOURCE_LIST] = "REG_RESOURCE_LIST",
-        [REG_FULL_RESOURCE_DESCRIPTOR] = "REG_FULL_RESOURCE_DESCRIPTOR",
-        [REG_RESOURCE_REQUIREMENTS_LIST] = "REG_RESOURCE_REQUIREMENTS_LIST",
-        [REG_QWORD] = "REG_QWORD",
-    };
 
     cJSON *attributes = cJSON_CreateObject();
 
@@ -90,7 +90,7 @@ cJSON *fim_registry_value_attributes_json(const cJSON* dbsync_event, const fim_r
         }
         if (configuration->opts & CHECK_SHA256SUM) {
             if (sha256 = cJSON_GetObjectItem(dbsync_event, "hash_sha256"), sha256 != NULL){
-                cJSON_AddStringToObject(attributes, "value_type", sha256->valuestring);
+                cJSON_AddStringToObject(attributes, "hash_sha256", sha256->valuestring);
             }
         }
 

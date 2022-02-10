@@ -9,6 +9,7 @@
  */
 #include <algorithm>
 #include <iostream>
+#include <stdexcept>
 #include <string>
 #include <set>
 #include "ipackageWrapper.h"
@@ -17,7 +18,7 @@
 #include "sharedDefs.h"
 
 
-constexpr auto  APPLICATION_STORE_REGISTRY {"SOFTWARE\\Classes\\Local Settings\\Software\\Microsoft\\Windows\\CurrentVersion\\AppModel\\Repository\\Packages"};
+constexpr auto APPLICATION_STORE_REGISTRY {"SOFTWARE\\Classes\\Local Settings\\Software\\Microsoft\\Windows\\CurrentVersion\\AppModel\\Repository\\Packages"};
 constexpr auto APPLICATION_VENDOR_REGISTRY {"SOFTWARE\\Classes"};
 constexpr auto FILE_ASSOCIATIONS_REGISTRY  { "\\Capabilities\\FileAssociations" };
 constexpr auto URL_ASSOCIATIONS_REGISTRY   { "\\Capabilities\\URLAssociations" };
@@ -140,7 +141,7 @@ class AppxWindowsWrapper final : public IPackageWrapper
 
                 if (fields.size() >= 3)
                 {
-                    Utils::Registry packageReg(m_key, m_userId + "\\" + APPLICATION_STORE_REGISTRY + "\\" + m_nameApp);
+                    const Utils::Registry packageReg(m_key, m_userId + "\\" + APPLICATION_STORE_REGISTRY + "\\" + m_nameApp);
                     m_version = fields.at(INDEX_VERSION);
                     m_architecture = getArchitecture(fields.at(INDEX_ARCHITECTURE));
                     m_location = getLocation(packageReg);
@@ -198,7 +199,7 @@ class AppxWindowsWrapper final : public IPackageWrapper
          *
          * @return Return package location.
          */
-        const std::string getLocation(Utils::Registry& registry)
+        const std::string getLocation(const Utils::Registry& registry)
         {
             std::string location;
 
@@ -213,10 +214,17 @@ class AppxWindowsWrapper final : public IPackageWrapper
          *
          * @return Return name application.
          */
-        const std::string getName(const std::string& fullName, Utils::Registry& registry)
+        const std::string getName(const std::string& fullName, const Utils::Registry& registry)
         {
             std::string name;
-            const auto fieldName{ Utils::split(fullName, '.').back() }; // Will only use the last vector element.
+
+            /*
+             * Example of  fullName
+             *
+             * Microsoft.Windows.Search
+             * Microsoft.SkypeApp
+             */
+            const auto keyName { Utils::split(fullName, '.').back() }; // Will only use the last vector element.
             constexpr auto INVALID_NAME_APP { "@{" };
 
             for (const auto& folder : registry.enumerate())
@@ -224,7 +232,7 @@ class AppxWindowsWrapper final : public IPackageWrapper
                 try
                 {
                     std::string value;
-                    Utils::Registry nameReg(m_key, m_userId  + "\\" + APPLICATION_STORE_REGISTRY + "\\" + m_nameApp + "\\" + folder + "\\Capabilities");
+                    const Utils::Registry nameReg(m_key, m_userId  + "\\" + APPLICATION_STORE_REGISTRY + "\\" + m_nameApp + "\\" + folder + "\\Capabilities");
 
                     if (nameReg.string("ApplicationName", value))
                     {
@@ -246,15 +254,14 @@ class AppxWindowsWrapper final : public IPackageWrapper
             {
                 try
                 {
-                    name = searchNameFromCacheRegistry(fieldName, name);
+                    name = searchNameFromCacheRegistry(keyName, name);
                 }
                 catch (...)
                 {
                 }
             }
 
-            const auto index { name.find(INVALID_NAME_APP) };
-            return (index != std::string::npos && index == 0) ? "" : name;
+            return name;
         }
 
         /*
@@ -264,7 +271,7 @@ class AppxWindowsWrapper final : public IPackageWrapper
          *
          * @return Returns the vendor name
          */
-        const std::string getVendor(Utils::Registry& registry)
+        const std::string getVendor(const Utils::Registry& registry)
         {
             std::string vendor;
 
@@ -272,12 +279,12 @@ class AppxWindowsWrapper final : public IPackageWrapper
             {
                 try
                 {
-                    Utils::Registry fileReg(m_key, m_userId + "\\" + APPLICATION_STORE_REGISTRY + "\\" + m_nameApp + "\\" + folder + FILE_ASSOCIATIONS_REGISTRY, KEY_READ | KEY_QUERY_VALUE);
+                    const Utils::Registry fileReg(m_key, m_userId + "\\" + APPLICATION_STORE_REGISTRY + "\\" + m_nameApp + "\\" + folder + FILE_ASSOCIATIONS_REGISTRY, KEY_READ | KEY_QUERY_VALUE);
                     vendor = searchPublisher(fileReg);
 
-                    if (vendor.size() == 0)
+                    if (vendor.empty())
                     {
-                        Utils::Registry urlReg(m_key, m_userId + "\\"  + APPLICATION_STORE_REGISTRY + "\\" + m_nameApp + "\\" + folder + URL_ASSOCIATIONS_REGISTRY, KEY_READ | KEY_QUERY_VALUE);
+                        const Utils::Registry urlReg(m_key, m_userId + "\\"  + APPLICATION_STORE_REGISTRY + "\\" + m_nameApp + "\\" + folder + URL_ASSOCIATIONS_REGISTRY, KEY_READ | KEY_QUERY_VALUE);
                         vendor = searchPublisher(urlReg);
                     }
                 }
@@ -301,23 +308,30 @@ class AppxWindowsWrapper final : public IPackageWrapper
         {
             std::string registry;
             std::string name;
-
-            // Looking for the named folder same like name app
-            for (const auto& folder : m_cacheReg)
+            constexpr auto INVALID_NAME_APP { "@{" };
+            auto findCacheName
             {
-                if (folder.find(nameApp) != std::string::npos)
+                [&nameApp](const std::string folder)
                 {
-                    registry = folder;
-                    break;
+                    return folder.find(nameApp) != std::string::npos;
                 }
+            };
+
+            const auto folder = std::find_if(m_cacheReg.begin(), m_cacheReg.end(), findCacheName);
+            // Search for the name of the folder containing the application name
+
+            if (folder != m_cacheReg.end())
+            {
+                registry = *folder;
             }
 
-            if (registry.size() != 0 )
+            if (!registry.empty())
             {
                 name = searchKeyOnSubRegistries(m_userId + "\\" + CACHE_NAME_REGISTRY + "\\" + registry, nameKey);
             }
 
-            return name;
+            const auto index { name.find(INVALID_NAME_APP) };
+            return (index != std::string::npos && index == 0) ? "" : name;
         }
 
         /*
@@ -331,16 +345,16 @@ class AppxWindowsWrapper final : public IPackageWrapper
         const std::string searchKeyOnSubRegistries(const std::string& path, const std::string& key)
         {
             std::string value;
-            Utils::Registry registry(m_key, path);
+            const Utils::Registry registry(m_key, path);
 
             if (!registry.string(key, value))
             {
                 for (const auto& folder : Utils::Registry(m_key, path).enumerate())
                 {
-                    std::string tempPath { path + "\\" + folder };
+                    const std::string tempPath { path + "\\" + folder };
                     value = searchKeyOnSubRegistries(tempPath, key);
 
-                    if (value.size())
+                    if (!value.empty())
                     {
                         break;
                     }
@@ -357,7 +371,7 @@ class AppxWindowsWrapper final : public IPackageWrapper
          *
          * @return Returns the publisher name found.
          */
-        const std::string searchPublisher(Utils::Registry& registry)
+        const std::string searchPublisher(const Utils::Registry& registry)
         {
             std::string publisher;
 
@@ -367,7 +381,7 @@ class AppxWindowsWrapper final : public IPackageWrapper
                 std::string vendorRegistry;
 
                 registry.string(value, vendorRegistry);
-                Utils::Registry pubRegistry(m_key, m_userId  + "\\" + APPLICATION_VENDOR_REGISTRY + "\\" + vendorRegistry + "\\Application");
+                const Utils::Registry pubRegistry(m_key, m_userId  + "\\" + APPLICATION_VENDOR_REGISTRY + "\\" + vendorRegistry + "\\Application");
 
                 if (pubRegistry.string("ApplicationCompany", data))
                 {

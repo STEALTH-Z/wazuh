@@ -22,6 +22,7 @@ with patch('wazuh.core.common.wazuh_uid'):
         from wazuh import mitre
         from wazuh.core import mitre as core_mitre
         from wazuh.core.common import decimals_date_format
+        from wazuh.core.utils import get_utc_strptime
 
 test_data_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data')
 
@@ -62,7 +63,7 @@ def sort_entries(entries, sort_key='id'):
 
 def check_datetime(element, key):
     if key in {'created_time', 'modified_time'}:
-        element[key] = datetime.strptime(element[key], '%Y-%m-%d %H:%M:%S.%f').strftime(decimals_date_format)
+        element[key] = get_utc_strptime(element[key], '%Y-%m-%d %H:%M:%S.%f').strftime(decimals_date_format)
 
     return element[key]
 

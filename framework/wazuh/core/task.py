@@ -7,8 +7,7 @@ from json import dumps, loads
 
 from wazuh.core import common
 from wazuh.core.exception import WazuhInternalError
-from wazuh.core.utils import WazuhDBQuery, \
-    WazuhDBBackend
+from wazuh.core.utils import WazuhDBQuery, WazuhDBBackend, get_date_from_timestamp
 from wazuh.core.wazuh_socket import WazuhSocket
 
 tasks_fields = {'task_id': 'task_id', 'agent_id': 'agent_id', 'node': 'node', 'module': 'module',
@@ -54,7 +53,7 @@ class WazuhDBQueryTask(WazuhDBQuery):
 
     def _format_data_into_dictionary(self):
         """Standardization of dates to the ISO 8601 format."""
-        [t.update((k, datetime.utcfromtimestamp(v).strftime(common.date_format))
+        [t.update((k, get_date_from_timestamp(v).strftime(common.date_format))
                   for k, v in t.items() if k in self.date_fields) for t in self._data]
 
         return {'items': self._data, 'totalItems': self.total_items}

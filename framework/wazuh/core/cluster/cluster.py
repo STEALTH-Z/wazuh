@@ -20,7 +20,7 @@ from wazuh.core import common
 from wazuh.core.InputValidator import InputValidator
 from wazuh.core.agent import WazuhDBQueryAgents
 from wazuh.core.cluster.utils import get_cluster_items, read_config
-from wazuh.core.utils import md5, mkdir_with_mode
+from wazuh.core.utils import md5, mkdir_with_mode, get_utc_now, get_date_from_timestamp
 
 logger = logging.getLogger('wazuh')
 agent_groups_path = os.path.relpath(common.groups_path, common.wazuh_path)
@@ -272,7 +272,7 @@ def compress_files(name, list_path, cluster_control_json=None):
     """
     failed_files = list()
     zip_file_path = path.join(common.wazuh_path, 'queue', 'cluster', name,
-                              f'{name}-{datetime.utcnow().timestamp()}-{str(random())[2:]}.zip')
+                              f'{name}-{get_utc_now().timestamp()}-{str(random())[2:]}.zip')
     if not path.exists(path.dirname(zip_file_path)):
         mkdir_with_mode(path.dirname(zip_file_path))
     with zipfile.ZipFile(zip_file_path, 'x') as zf:
@@ -544,7 +544,7 @@ def merge_info(merge_type, node_name, files=None, file_type=""):
             with open(full_path, 'rb') as f:
                 data = f.read()
 
-            header = f"{len(data)} {filename} {datetime.utcfromtimestamp(stat_data.st_mtime)}"
+            header = f"{len(data)} {filename} {get_date_from_timestamp(stat_data.st_mtime)}"
 
             o_f.write((header + '\n').encode() + data)
 

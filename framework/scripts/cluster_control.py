@@ -16,6 +16,7 @@ import wazuh.core.cluster.cluster
 import wazuh.core.cluster.utils
 from wazuh.core.cluster import control, local_client
 from wazuh.core.common import decimals_date_format
+from wazuh.core.utils import get_utc_strptime
 
 
 def __print_table(data, headers, show_header=False):
@@ -89,7 +90,7 @@ async def print_health(config, more, filter_node):
         """
         if end_time != 'n/a' and start_time != 'n/a':
             seconds = \
-                datetime.strptime(end_time, decimals_date_format) - datetime.strptime(start_time, decimals_date_format)
+                get_utc_strptime(end_time, decimals_date_format) - get_utc_strptime(start_time, decimals_date_format)
             total_seconds = f"{round(seconds.total_seconds(), 3) if seconds.total_seconds() >= 0.0005 else 0.001}s"
         else:
             total_seconds = 'n/a'

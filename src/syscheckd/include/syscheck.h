@@ -98,13 +98,17 @@ typedef struct get_data_ctx {
     const char *path;
 } get_data_ctx;
 
+typedef struct create_json_event_ctx {
+    event_data_t* event;
+    const directory_t* config;
+} create_json_event_ctx;
+
 typedef struct fim_txn_context_s {
     event_data_t* evt_data;
     fim_entry* latest_entry;
     volatile bool db_full;
 
 } fim_txn_context_t;
-
 
 #ifdef WIN32
 /* Flags to know if a directory/file's watcher has been removed */
@@ -214,6 +218,7 @@ int fim_directory(const char *dir,
  * @param [in] configuration Configuration block associated with a previous event.
  * @param [in] evt_data Information associated to the triggered event
  * @param [in] txn_handle DBSync transaction handler. Can be NULL.
+ * @param [in] ctx DBSync transaction context.
  */
 void fim_file(const char *path,
               const directory_t *configuration,

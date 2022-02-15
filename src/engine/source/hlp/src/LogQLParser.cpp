@@ -117,6 +117,12 @@ static Parser parseCaptureString(Token token) {
     parser.name = captureParams[0];
     captureParams.erase(captureParams.begin());
     parser.captureOpts = std::move(captureParams);
+    if (!parser.captureOpts.empty()) {
+        auto it = ECSParserMapper.find({ parser.captureOpts[0].c_str(), parser.captureOpts[0].length()});
+        if (it != ECSParserMapper.end()) {
+            parser.parserType = it->second;
+        }
+    }
 
     return parser;
 }

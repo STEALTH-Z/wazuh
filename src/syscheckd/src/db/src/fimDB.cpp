@@ -19,13 +19,11 @@ void FIMDB::setFileLimit()
 void FIMDB::setRegistryLimit()
 {
     m_dbsyncHandler->setTableMaxRow("registry_key", m_registryLimit);
-
 }
 
 void FIMDB::setValueLimit()
 {
     m_dbsyncHandler->setTableMaxRow("registry_data", m_registryLimit);
-
 }
 
 void FIMDB::registerRSync()
@@ -76,8 +74,6 @@ void FIMDB::loopRSync()
         sync();
         // LCOV_EXCL_STOP
     }
-    m_rsyncHandler = nullptr;
-    m_dbsyncHandler = nullptr;
 }
 
 void FIMDB::init(unsigned int syncInterval,
@@ -176,6 +172,8 @@ void FIMDB::teardown()
     try
     {
         stopIntegrity();
+        m_rsyncHandler = nullptr;
+        m_dbsyncHandler = nullptr;
     }
     // LCOV_EXCL_START
     catch (const std::exception& ex)

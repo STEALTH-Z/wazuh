@@ -336,11 +336,14 @@ class FIMDB
                 m_stopping = true;
             }
 
-            m_cv.notify_all();
-
-            if (m_integrityThread.joinable())
+            if (m_runIntegrity)
             {
-                m_integrityThread.join();
+                m_cv.notify_all();
+
+                if (m_integrityThread.joinable())
+                {
+                    m_integrityThread.join();
+                }
             }
         };
 

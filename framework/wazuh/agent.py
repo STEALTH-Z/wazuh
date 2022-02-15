@@ -1116,7 +1116,7 @@ def get_agent_config(agent_list=None, component=None, config=None):
     if my_agent.status != "active":
         raise WazuhError(1740)
 
-    return WazuhResult({'data': my_agent.getconfig(component=component, config=config, agent_version=my_agent.version)})
+    return WazuhResult({'data': my_agent.get_config(component=component, config=config, agent_version=my_agent.version)})
 
 
 @expose_resources(actions=["agent:read"], resources=["agent:id:{agent_list}"],

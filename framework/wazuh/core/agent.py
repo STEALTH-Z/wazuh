@@ -869,14 +869,12 @@ class Agent:
                 set_default = True
 
         # Update group file
-        # TODO core team is implementing a fix to make this whole process atomic. Default addition is failing too
         Agent.set_agent_group_relationship(agent_id, group_id, remove=True)
-        set_default and Agent.set_agent_group_relationship(agent_id, 'default')
 
         return f"Agent '{agent_id}' removed from '{group_id}'." + (" Agent reassigned to group default."
                                                                    if set_default else "")
 
-    def getconfig(self, component: str = '', config: str = '', agent_version: str = '') -> dict:
+    def get_config(self, component: str = '', config: str = '', agent_version: str = '') -> dict:
         """Read agent's loaded configuration.
 
         Parameters

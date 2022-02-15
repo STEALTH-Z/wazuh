@@ -12,7 +12,7 @@
 #include "rootcheck.h"
 
 /* Prototypes */
-static int read_sys_file(const char *file_name, int do_read);
+static int read_sys_file(const char *file_name,  int do_read);
 static int read_sys_dir(const char *dir_name, int do_read);
 
 /* Global variables */
@@ -36,8 +36,9 @@ static int read_sys_file(const char *file_name, int do_read)
 #endif
     if (lstat(file_name, &statbuf) < 0) {
 #ifndef WIN32
-        char op_msg[OS_SIZE_1024 + 1];
-        snprintf(op_msg, OS_SIZE_1024, "Anomaly detected in file '%s'. "
+        const size_t size_buffer = strlen(file_name) + strlen("Anomaly detected in file ''. Hidden from stats, but showing up on readdir. Possible kernel level rootkit.") + 1;
+        char op_msg[size_buffer];
+        snprintf(op_msg, size_buffer, "Anomaly detected in file '%s'. "
                  "Hidden from stats, but showing up on readdir. "
                  "Possible kernel level rootkit.",
                  file_name);
@@ -86,11 +87,12 @@ static int read_sys_file(const char *file_name, int do_read)
             } else if (total != statbuf.st_size) {
                 struct stat statbuf2;
 
-                if ((lstat(file_name, &statbuf2) == 0) &&
-                        (total != statbuf2.st_size) &&
-                        (statbuf.st_size == statbuf2.st_size)) {
-                    char op_msg[OS_SIZE_1024 + 1];
-                    snprintf(op_msg, OS_SIZE_1024, "Anomaly detected in file "
+                if ((lstat(file_name, &statbuf2) == 0) && (total != statbuf2.st_size) && (statbuf.st_size == statbuf2.st_size)) {
+                    const size_t size_buffer = strlen(file_name) + strlen("Anomaly detected in file ''. File size doesn't match what we found. Possible kernel level rootkit.") + 1;
+
+                    char op_msg[size_buffer];
+
+                    snprintf(op_msg, size_buffer, "Anomaly detected in file "
                              "'%s'. File size doesn't match what we found. "
                              "Possible kernel level rootkit.",
                              file_name);
@@ -117,12 +119,13 @@ static int read_sys_file(const char *file_name, int do_read)
         }
 
         if (statbuf.st_uid == 0) {
-            char op_msg[OS_SIZE_1024 + 1];
+            int size_buffer = strlen(file_name) + strlen("File '' is: \n          - owned by root,\n          - has write permissions to anyone.")  + 1;
+            char op_msg[size_buffer];
 #ifdef OSSECHIDS
-            snprintf(op_msg, OS_SIZE_1024, "File '%s' is owned by root "
+            snprintf(op_msg, size_buffer, "File '%s' is owned by root "
                      "and has written permissions to anyone.", file_name);
 #else
-            snprintf(op_msg, OS_SIZE_1024, "File '%s' is: \n"
+            snprintf(op_msg, size_buffer, "File '%s' is: \n"
                      "          - owned by root,\n"
                      "          - has write permissions to anyone.",
                      file_name);

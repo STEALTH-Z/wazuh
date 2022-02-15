@@ -127,22 +127,23 @@ void *read_nmapg(logreader *lf, int *rc, int drop_it) {
     int final_msg_s;
     int need_clear = 0;
 
-    char str[OS_MAXSTR + 1];
-    char final_msg[OS_MAXSTR + 1];
-    char buffer[OS_MAXSTR + 1];
+    char str[OS_MAXSTR - OS_LOG_HEADER];
+    char final_msg[OS_MAXSTR - OS_LOG_HEADER];
     char port[17];
     char proto[17];
+    char buffer[sizeof(proto) + sizeof(port) + 4];
 
     char *ip = NULL;
     char *p;
     char *q;
 
     int lines = 0;
+    int written_bytes = 0;
 
     *rc = 0;
-    str[OS_MAXSTR] = '\0';
-    final_msg[OS_MAXSTR] = '\0';
-    buffer[OS_MAXSTR] = '\0';
+    str[OS_MAXSTR - OS_LOG_HEADER - 1] = '\0';
+    final_msg[OS_MAXSTR - OS_LOG_HEADER - 1] = '\0';
+    buffer[sizeof(proto) + sizeof(port) + 3] = '\0';
 
     port[16] = '\0';
     proto[16] = '\0';
@@ -219,9 +220,16 @@ void *read_nmapg(logreader *lf, int *rc, int drop_it) {
         }
 
         /* Generate final msg */
-        snprintf(final_msg, OS_MAXSTR, "Host: %s, open ports:",
+        written_bytes = snprintf(final_msg, OS_MAXSTR - OS_LOG_HEADER, "Host: %s, open ports:",
                  ip);
-        final_msg_s = OS_MAXSTR - ((strlen(final_msg) + 3));
+
+        if (written_bytes + 1 <= OS_MAXSTR - OS_LOG_HEADER) {
+            final_msg_s = OS_MAXSTR - OS_LOG_HEADER - 1 - strlen(final_msg);
+        }
+        else {
+            final_msg_s = 0;
+            merror("Large message size from file '%s' (length = " FTELL_TT "): '%s'...", lf->file, FTELL_INT64 written_bytes, final_msg);
+        }
 
         /* Get port and protocol */
         do {
@@ -242,9 +250,9 @@ void *read_nmapg(logreader *lf, int *rc, int drop_it) {
             }
 
             /* Add ports */
-            snprintf(buffer, OS_MAXSTR, " %s(%s)", port, proto);
+            snprintf(buffer, sizeof(proto) + sizeof(port) + 4, " %s(%s)", port, proto);
             strncat(final_msg, buffer, final_msg_s);
-            final_msg_s -= (strlen(buffer) + 2);
+            final_msg_s -= strlen(buffer);
 
         } while (*p == ',' && (p++));
 

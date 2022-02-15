@@ -22,11 +22,13 @@ void *read_mysql_log(logreader *lf, int *rc, int drop_it) {
     size_t str_len = 0;
     int need_clear = 0;
     char *p;
-    char str[OS_MAXSTR + 1];
-    char buffer[OS_MAXSTR + 1];
+    char str[OS_MAXSTR - OS_LOG_HEADER];
+    char buffer[OS_MAXSTR - OS_LOG_HEADER];
     int lines = 0;
+    int written_bytes = 0;
 
-    str[OS_MAXSTR] = '\0';
+    str[OS_MAXSTR - OS_LOG_HEADER - 1] = '\0';
+    buffer[OS_MAXSTR - OS_LOG_HEADER - 1] = '\0';
     *rc = 0;
 
     /* Obtain context to calculate hash */
@@ -102,123 +104,123 @@ void *read_mysql_log(logreader *lf, int *rc, int drop_it) {
             }
 
             /* Valid MySQL message */
-            snprintf(buffer, OS_MAXSTR, "MySQL log: %s %s",
+            written_bytes = snprintf(buffer, OS_MAXSTR - OS_LOG_HEADER, "MySQL log: %s %s",
                      __mysql_last_time, p);
         }
 
-       /* MySQL 5.7 messages have the following format(in case of NOT utc):
-        * YYYY-MM-DDThh:mm:ss.uuuuuu±hh:mm XX
+        /* MySQL 5.7 messages have the following format(in case of NOT utc):
+            * YYYY-MM-DDThh:mm:ss.uuuuuu±hh:mm XX
+            * ref: https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_log_timestamps
+            */
+        else if ((str_len > 35) &&
+                (str[4] == '-') &&
+                (str[7] == '-') &&
+                (str[10] == 'T') &&
+                (str[13] == ':') &&
+                (str[16] == ':') &&
+                (str[19] == '.') &&
+                ((str[26] == '-') || (str[26] == '+')) &&
+                (str[29] == ':') &&
+                (str[32] == ' ') &&
+                isdigit((int)str[0]) &&
+                isdigit((int)str[1]) &&
+                isdigit((int)str[2]) &&
+                isdigit((int)str[3]) &&
+                isdigit((int)str[5]) &&
+                isdigit((int)str[6]) &&
+                isdigit((int)str[8]) &&
+                isdigit((int)str[9]) &&
+                isdigit((int)str[11]) &&
+                isdigit((int)str[12]) &&
+                isdigit((int)str[14]) &&
+                isdigit((int)str[15]) &&
+                isdigit((int)str[17]) &&
+                isdigit((int)str[18]) &&
+                isdigit((int)str[20]) &&
+                isdigit((int)str[21]) &&
+                isdigit((int)str[22]) &&
+                isdigit((int)str[23]) &&
+                isdigit((int)str[24]) &&
+                isdigit((int)str[25]) &&
+                isdigit((int)str[27]) &&
+                isdigit((int)str[28]) &&
+                isdigit((int)str[30]) &&
+                isdigit((int)str[31])) {
+            /* Save last time */
+            strncpy(__mysql_last_time, str, 33);
+            __mysql_last_time[32] = '\0';
+
+            /* Remove spaces and tabs */
+            p = str + 32;
+            while (*p == ' ' || *p == '\t') {
+                p++;
+            }
+
+            /* Valid MySQL message */
+            written_bytes = snprintf(buffer, OS_MAXSTR - OS_LOG_HEADER, "MySQL log: %s %s",
+                        __mysql_last_time, p);
+        }
+
+        /* MySQL 5.7 messages have the following format(in case of utc):
+        * YYYY-MM-DDThh:mm:ss.uuuuuuZ XX
         * ref: https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_log_timestamps
         */
-       else if ((str_len > 35) &&
-               (str[4] == '-') &&
-               (str[7] == '-') &&
-               (str[10] == 'T') &&
-               (str[13] == ':') &&
-               (str[16] == ':') &&
-               (str[19] == '.') &&
-               ((str[26] == '-') || (str[26] == '+')) &&
-               (str[29] == ':') &&
-               (str[32] == ' ') &&
-               isdigit((int)str[0]) &&
-               isdigit((int)str[1]) &&
-               isdigit((int)str[2]) &&
-               isdigit((int)str[3]) &&
-               isdigit((int)str[5]) &&
-               isdigit((int)str[6]) &&
-               isdigit((int)str[8]) &&
-               isdigit((int)str[9]) &&
-               isdigit((int)str[11]) &&
-               isdigit((int)str[12]) &&
-               isdigit((int)str[14]) &&
-               isdigit((int)str[15]) &&
-               isdigit((int)str[17]) &&
-               isdigit((int)str[18]) &&
-               isdigit((int)str[20]) &&
-               isdigit((int)str[21]) &&
-               isdigit((int)str[22]) &&
-               isdigit((int)str[23]) &&
-               isdigit((int)str[24]) &&
-               isdigit((int)str[25]) &&
-               isdigit((int)str[27]) &&
-               isdigit((int)str[28]) &&
-               isdigit((int)str[30]) &&
-               isdigit((int)str[31])) {
-           /* Save last time */
-           strncpy(__mysql_last_time, str, 33);
-           __mysql_last_time[32] = '\0';
+        else if ((str_len > 30) &&
+                (str[4] == '-') &&
+                (str[7] == '-') &&
+                (str[10] == 'T') &&
+                (str[13] == ':') &&
+                (str[16] == ':') &&
+                (str[19] == '.') &&
+                (str[26] == 'Z') &&
+                (str[27] == ' ') &&
+                isdigit((int)str[0]) &&
+                isdigit((int)str[1]) &&
+                isdigit((int)str[2]) &&
+                isdigit((int)str[3]) &&
+                isdigit((int)str[5]) &&
+                isdigit((int)str[6]) &&
+                isdigit((int)str[8]) &&
+                isdigit((int)str[9]) &&
+                isdigit((int)str[11]) &&
+                isdigit((int)str[12]) &&
+                isdigit((int)str[14]) &&
+                isdigit((int)str[15]) &&
+                isdigit((int)str[17]) &&
+                isdigit((int)str[18]) &&
+                isdigit((int)str[20]) &&
+                isdigit((int)str[21]) &&
+                isdigit((int)str[22]) &&
+                isdigit((int)str[23]) &&
+                isdigit((int)str[24]) &&
+                isdigit((int)str[25])) {
+            /* Save last time */
+            strncpy(__mysql_last_time, str, 28);
+            __mysql_last_time[27] = '\0';
 
-           /* Remove spaces and tabs */
-           p = str + 32;
-           while (*p == ' ' || *p == '\t') {
-               p++;
-           }
+            /* Remove spaces and tabs */
+            p = str + 27;
+            while (*p == ' ' || *p == '\t') {
+                p++;
+            }
 
-           /* Valid MySQL message */
-           snprintf(buffer, OS_MAXSTR, "MySQL log: %s %s",
+            /* Valid MySQL message */
+            written_bytes = snprintf(buffer, OS_MAXSTR - OS_LOG_HEADER, "MySQL log: %s %s",
                     __mysql_last_time, p);
-       }
-       
-      /* MySQL 5.7 messages have the following format(in case of utc):
-       * YYYY-MM-DDThh:mm:ss.uuuuuuZ XX
-       * ref: https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_log_timestamps
-       */
-      else if ((str_len > 30) &&
-              (str[4] == '-') &&
-              (str[7] == '-') &&
-              (str[10] == 'T') &&
-              (str[13] == ':') &&
-              (str[16] == ':') &&
-              (str[19] == '.') &&
-              (str[26] == 'Z') &&
-              (str[27] == ' ') &&
-              isdigit((int)str[0]) &&
-              isdigit((int)str[1]) &&
-              isdigit((int)str[2]) &&
-              isdigit((int)str[3]) &&
-              isdigit((int)str[5]) &&
-              isdigit((int)str[6]) &&
-              isdigit((int)str[8]) &&
-              isdigit((int)str[9]) &&
-              isdigit((int)str[11]) &&
-              isdigit((int)str[12]) &&
-              isdigit((int)str[14]) &&
-              isdigit((int)str[15]) &&
-              isdigit((int)str[17]) &&
-              isdigit((int)str[18]) &&
-              isdigit((int)str[20]) &&
-              isdigit((int)str[21]) &&
-              isdigit((int)str[22]) &&
-              isdigit((int)str[23]) &&
-              isdigit((int)str[24]) &&
-              isdigit((int)str[25])) {
-          /* Save last time */
-          strncpy(__mysql_last_time, str, 28);
-          __mysql_last_time[27] = '\0';
-
-          /* Remove spaces and tabs */
-          p = str + 27;
-          while (*p == ' ' || *p == '\t') {
-              p++;
-          }
-
-          /* Valid MySQL message */
-          snprintf(buffer, OS_MAXSTR, "MySQL log: %s %s",
-                   __mysql_last_time, p);
-      }
+        }
 
         /* Multiple events at the same second share the same timestamp:
-         * 0909 2020 2020 2020 20
-         */
+            * 0909 2020 2020 2020 20
+            */
         else if ((str_len > 10) && (__mysql_last_time[0] != '\0') &&
-                 (str[0] == 0x09) &&
-                 (str[1] == 0x09) &&
-                 (str[2] == 0x20) &&
-                 (str[3] == 0x20) &&
-                 (str[4] == 0x20) &&
-                 (str[5] == 0x20) &&
-                 (str[6] == 0x20) &&
-                 (str[7] == 0x20)) {
+                    (str[0] == 0x09) &&
+                    (str[1] == 0x09) &&
+                    (str[2] == 0x20) &&
+                    (str[3] == 0x20) &&
+                    (str[4] == 0x20) &&
+                    (str[5] == 0x20) &&
+                    (str[6] == 0x20) &&
+                    (str[7] == 0x20)) {
             p = str + 2;
 
             /* Remove extra spaces and tabs */
@@ -227,10 +229,14 @@ void *read_mysql_log(logreader *lf, int *rc, int drop_it) {
             }
 
             /* Valid MySQL message */
-            snprintf(buffer, OS_MAXSTR, "MySQL log: %s %s",
-                     __mysql_last_time, p);
+            written_bytes = snprintf(buffer, OS_MAXSTR - OS_LOG_HEADER, "MySQL log: %s %s",
+                        __mysql_last_time, p);
         } else {
             continue;
+        }
+
+        if (written_bytes + 1 > OS_MAXSTR - OS_LOG_HEADER) {
+            merror("Large message size from file '%s' (length = " FTELL_TT "): '%s'...", lf->file, FTELL_INT64 written_bytes, buffer);
         }
 
         mdebug2("Reading mysql messages: '%s'", buffer);

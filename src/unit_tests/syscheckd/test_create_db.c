@@ -1274,7 +1274,7 @@ static void test_fim_file_add(void **state) {
 
     expect_fim_file_diff(file_path, strdup("diff"));
 
-    fim_file(file_path, &configuration, &evt_data, NULL);
+    fim_file(file_path, &configuration, &evt_data, NULL, NULL);
 }
 
 
@@ -1335,7 +1335,7 @@ static void test_fim_file_modify(void **state) {
 
     will_return(__wrap_fim_db_file_update, FIMDB_OK);
 
-    fim_file(file_path, &configuration, &evt_data, NULL);
+    fim_file(file_path, &configuration, &evt_data, NULL, NULL);
 }
 
 static void test_fim_file_no_attributes(void **state) {
@@ -1382,7 +1382,7 @@ static void test_fim_file_no_attributes(void **state) {
     expect_string(__wrap__mdebug1, formatted_msg, buffer2);
 
 
-    fim_file(file_path, &configuration, &evt_data, NULL);
+    fim_file(file_path, &configuration, &evt_data, NULL, NULL);
 }
 
 static void test_fim_file_error_on_insert(void **state) {
@@ -1447,7 +1447,7 @@ static void test_fim_file_error_on_insert(void **state) {
 
     will_return(__wrap_fim_db_file_update, FIMDB_ERR);
 
-    fim_file(file_path, &configuration, &evt_data, NULL);
+    fim_file(file_path, &configuration, &evt_data, NULL, NULL);
 }
 
 static void test_fim_checker_scheduled_configuration_directory_error(void **state) {
@@ -1467,7 +1467,7 @@ static void test_fim_checker_scheduled_configuration_directory_error(void **stat
 
     expect_string(__wrap__mdebug2, formatted_msg, "(6319): No configuration found for (file):'/not/found/test.file'");
 
-    fim_checker(path, &evt_data, NULL, NULL);
+    fim_checker(path, &evt_data, NULL, NULL, NULL);
 }
 
 static void test_fim_checker_not_scheduled_configuration_directory_error(void **state) {
@@ -1488,7 +1488,7 @@ static void test_fim_checker_not_scheduled_configuration_directory_error(void **
 
     expect_string(__wrap__mdebug2, formatted_msg, "(6319): No configuration found for (file):'/not/found/test.file'");
 
-    fim_checker(path, &evt_data, NULL, NULL);
+    fim_checker(path, &evt_data, NULL, NULL, NULL);
 }
 
 #ifndef TEST_WINAGENT
@@ -1507,7 +1507,7 @@ static void test_fim_checker_over_max_recursion_level(void **state) {
     expect_string(__wrap__mdebug2, formatted_msg,
         "(6217): Maximum level of recursion reached. Depth:1 recursion_level:0 '/media/a/test.file'");
 
-    fim_checker(path, &evt_data, NULL, NULL);
+    fim_checker(path, &evt_data, NULL, NULL, NULL);
 
     ((directory_t *)OSList_GetDataFromIndex(syscheck.directories, 3))->recursion_level = 50;
 }
@@ -1532,7 +1532,7 @@ static void test_fim_checker_deleted_file(void **state) {
 
     errno = 1;
 
-    fim_checker(path, &evt_data, NULL, NULL);
+    fim_checker(path, &evt_data, NULL, NULL, NULL);
 
     errno = 0;
 }
@@ -1581,7 +1581,7 @@ static void test_fim_checker_deleted_file_enoent(void **state) {
     expect_fim_db_get_path("/media/test.file", FIMDB_ERR);
     expect_fim_diff_process_delete_file(path, 0);
 
-    fim_checker(path, &evt_data, NULL, NULL);
+    fim_checker(path, &evt_data, NULL, NULL, NULL);
 
     errno = 0;
     ((directory_t *)OSList_GetDataFromIndex(syscheck.directories, 3))->options &= ~CHECK_SEECHANGES;
@@ -1604,7 +1604,7 @@ static void test_fim_checker_no_file_system(void **state) {
     expect_string(__wrap_HasFilesystem, path, "/media/test.file");
     will_return(__wrap_HasFilesystem, -1);
 
-    fim_checker(path, &evt_data, NULL, NULL);
+    fim_checker(path, &evt_data, NULL, NULL, NULL);
 }
 
 static void test_fim_checker_fim_regular(void **state) {
@@ -1638,7 +1638,7 @@ static void test_fim_checker_fim_regular(void **state) {
     will_return(__wrap_get_group, strdup("group"));
     will_return(__wrap_fim_db_file_update, FIMDB_OK);
 
-    fim_checker(path, &evt_data, NULL, NULL);
+    fim_checker(path, &evt_data, NULL, NULL, NULL);
 }
 
 static void test_fim_checker_fim_regular_warning(void **state) {
@@ -1673,7 +1673,7 @@ static void test_fim_checker_fim_regular_warning(void **state) {
     will_return(__wrap_get_group, strdup("group"));
     will_return(__wrap_fim_db_file_update, FIMDB_ERR);
 
-    fim_checker(path, &evt_data, NULL, NULL);
+    fim_checker(path, &evt_data, NULL, NULL, NULL);
 }
 
 static void test_fim_checker_fim_regular_ignore(void **state) {
@@ -1696,7 +1696,7 @@ static void test_fim_checker_fim_regular_ignore(void **state) {
 
     expect_string(__wrap__mdebug2, formatted_msg, "(6204): Ignoring 'file' '/etc/mtab' due to '/etc/mtab'");
 
-    fim_checker(path, &evt_data, NULL, NULL);
+    fim_checker(path, &evt_data, NULL, NULL, NULL);
 }
 
 static void test_fim_checker_fim_regular_restrict(void **state) {
@@ -1719,7 +1719,7 @@ static void test_fim_checker_fim_regular_restrict(void **state) {
 
     expect_string(__wrap__mdebug2, formatted_msg, "(6203): Ignoring entry '/media/test' due to restriction 'file$'");
 
-    fim_checker(path, &evt_data, NULL, NULL);
+    fim_checker(path, &evt_data, NULL, NULL, NULL);
 }
 
 static void test_fim_checker_fim_directory(void **state) {
@@ -1760,7 +1760,7 @@ static void test_fim_checker_fim_directory(void **state) {
     will_return(__wrap_readdir, NULL);
     will_return(__wrap_readdir, NULL);
 
-    fim_checker(path, &evt_data, NULL, NULL);
+    fim_checker(path, &evt_data, NULL, NULL, NULL);
 }
 
 static void test_fim_checker_fim_directory_on_max_recursion_level(void **state) {
@@ -1805,7 +1805,7 @@ static void test_fim_checker_fim_directory_on_max_recursion_level(void **state) 
     expect_string(__wrap__mdebug2, formatted_msg,
         "(6347): Directory '/media/test' is already on the max recursion_level (0), it will not be scanned.");
 
-    fim_checker(path, &evt_data, NULL, NULL);
+    fim_checker(path, &evt_data, NULL, NULL, NULL);
 
     ((directory_t *)OSList_GetDataFromIndex(syscheck.directories, 3))->recursion_level = 50;
 }
@@ -1823,7 +1823,7 @@ static void test_fim_checker_root_ignore_file_under_recursion_level(void **state
     expect_string(__wrap__mdebug2, formatted_msg,
         "(6217): Maximum level of recursion reached. Depth:1 recursion_level:0 '/media/test.file'");
 
-    fim_checker(path, &evt_data, NULL, NULL);
+    fim_checker(path, &evt_data, NULL, NULL, NULL);
 }
 
 static void test_fim_checker_root_file_within_recursion_level(void **state) {
@@ -1853,7 +1853,7 @@ static void test_fim_checker_root_file_within_recursion_level(void **state) {
     will_return(__wrap_get_group, strdup("group"));
     will_return(__wrap_fim_db_file_update, FIMDB_OK);
 
-    fim_checker(path, &evt_data, NULL, NULL);
+    fim_checker(path, &evt_data, NULL, NULL, NULL);
 }
 
 static void test_fim_scan_db_full_double_scan(void **state) {
@@ -2150,7 +2150,7 @@ static void test_fim_checker_over_max_recursion_level(void **state) {
 
     expect_string(__wrap__mdebug2, formatted_msg, debug_msg);
 
-    fim_checker(expanded_path, &evt_data, NULL, NULL);
+    fim_checker(expanded_path, &evt_data, NULL, NULL, NULL);
 }
 
 static void test_fim_checker_deleted_file(void **state) {
@@ -2177,7 +2177,7 @@ static void test_fim_checker_deleted_file(void **state) {
 
     errno = 1;
 
-    fim_checker(expanded_path, &evt_data, NULL, NULL);
+    fim_checker(expanded_path, &evt_data, NULL, NULL, NULL);
 
     errno = 0;
 }
@@ -2233,7 +2233,7 @@ static void test_fim_checker_deleted_file_enoent(void **state) {
 
     expect_fim_diff_process_delete_file(path, 0);
 
-    fim_checker(expanded_path, &evt_data, NULL, NULL);
+    fim_checker(expanded_path, &evt_data, NULL, NULL, NULL);
 
     errno = 0;
     ((directory_t *)OSList_GetDataFromIndex(syscheck.directories, 7))->options &= ~CHECK_SEECHANGES;
@@ -2269,7 +2269,7 @@ static void test_fim_checker_fim_regular(void **state) {
     expect_string(__wrap_w_get_file_attrs, file_path, expanded_path);
     will_return(__wrap_w_get_file_attrs, 123456);
     will_return(__wrap_fim_db_transaction_sync_row, 0);
-    fim_checker(expanded_path, &evt_data, NULL, NULL);
+    fim_checker(expanded_path, &evt_data, NULL, NULL, NULL);
 }
 
 static void test_fim_checker_fim_regular_ignore(void **state) {
@@ -2299,7 +2299,7 @@ static void test_fim_checker_fim_regular_ignore(void **state) {
     snprintf(debug_msg, OS_MAXSTR, "(6204): Ignoring 'file' '%s' due to '%s'", expanded_path, expanded_path);
     expect_string(__wrap__mdebug2, formatted_msg, debug_msg);
 
-    fim_checker(expanded_path, &evt_data, NULL, NULL);
+    fim_checker(expanded_path, &evt_data, NULL, NULL, NULL);
 }
 
 static void test_fim_checker_fim_regular_restrict(void **state) {
@@ -2329,7 +2329,7 @@ static void test_fim_checker_fim_regular_restrict(void **state) {
     snprintf(debug_msg, OS_MAXSTR, "(6203): Ignoring entry '%s' due to restriction 'wmic.exe$'", expanded_path);
     expect_string(__wrap__mdebug2, formatted_msg, debug_msg);
 
-    fim_checker(expanded_path, &evt_data, NULL, NULL);
+    fim_checker(expanded_path, &evt_data, NULL, NULL, NULL);
 }
 
 static void test_fim_checker_fim_regular_warning(void **state) {
@@ -2363,7 +2363,7 @@ static void test_fim_checker_fim_regular_warning(void **state) {
 
     will_return(__wrap_fim_db_file_update, FIMDB_ERR);
 
-    fim_checker(expanded_path, &evt_data, NULL, NULL);
+    fim_checker(expanded_path, &evt_data, NULL, NULL, NULL);
 }
 
 static void test_fim_checker_fim_directory(void **state) {
@@ -2409,7 +2409,7 @@ static void test_fim_checker_fim_directory(void **state) {
         "(6347): Directory '%s' is already on the max recursion_level (0), it will not be scanned.", expanded_path_test);
     expect_string(__wrap__mdebug2, formatted_msg, skip_directory_message);
 
-    fim_checker(expanded_path, &evt_data, NULL, NULL);
+    fim_checker(expanded_path, &evt_data, NULL, NULL, NULL);
 }
 
 
@@ -2425,7 +2425,7 @@ static void test_fim_checker_root_ignore_file_under_recursion_level(void **state
     expect_string(__wrap__mdebug2, formatted_msg,
         "(6217): Maximum level of recursion reached. Depth:1 recursion_level:0 'c:\\windows\\test.file'");
 
-    fim_checker(path, &evt_data, NULL, NULL);
+    fim_checker(path, &evt_data, NULL, NULL, NULL);
 }
 
 static void test_fim_checker_root_file_within_recursion_level(void **state) {
@@ -2692,7 +2692,7 @@ static void test_fim_check_db_state_empty_to_90_percentage(void **state) {
 static void test_fim_check_db_state_90_percentage_to_empty(void **state) {
     expect_string(__wrap__minfo, formatted_msg, "(6036): The file database status returns to normal.");
     expect_string(__wrap_send_log_msg, msg, "wazuh: FIM DB: {\"fim_db_table\":\"file_entry\",\"file_limit\":50000,\"file_count\":0,\"alert_type\":\"normal\"}");
-    will_return(__wrap_send_log_msg, 1); 
+    will_return(__wrap_send_log_msg, 1);
 
     assert_int_equal(_files_db_state, FIM_STATE_DB_90_PERCENTAGE);
 
@@ -2952,7 +2952,7 @@ static void test_fim_directory(void **state) {
     expect_string(__wrap__mdebug2, formatted_msg, "(6319): No configuration found for (file):'test\\test'");
 #endif
 
-    ret = fim_directory("test", &evt_data, NULL, NULL);
+    ret = fim_directory("test", &evt_data, NULL, NULL, NULL);
 
     assert_int_equal(ret, 0);
 }
@@ -2968,7 +2968,7 @@ static void test_fim_directory_ignore(void **state) {
     will_return(__wrap_readdir, fim_data->entry);
     will_return(__wrap_readdir, NULL);
 
-    ret = fim_directory(".", &evt_data, NULL, NULL);
+    ret = fim_directory(".", &evt_data, NULL, NULL, NULL);
 
     assert_int_equal(ret, 0);
 }
@@ -2978,7 +2978,7 @@ static void test_fim_directory_nodir(void **state) {
 
     expect_string(__wrap__merror, formatted_msg, "(1105): Attempted to use null string.");
 
-    ret = fim_directory(NULL, NULL, NULL, NULL);
+    ret = fim_directory(NULL, NULL, NULL, NULL, NULL);
 
     assert_int_equal(ret, OS_INVALID);
 }
@@ -2992,7 +2992,7 @@ static void test_fim_directory_opendir_error(void **state) {
 
     errno = EACCES;
 
-    ret = fim_directory("test", NULL, NULL, NULL);
+    ret = fim_directory("test", NULL, NULL, NULL, NULL);
 
     errno = 0;
 

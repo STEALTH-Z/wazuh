@@ -22,8 +22,6 @@
 
 #include "../syscheckd/include/syscheck.h"
 
-syscheck_config syscheck;
-
 /* setup/teardowns */
 static int setup_group(void **state) {
 
